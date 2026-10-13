@@ -1,0 +1,4 @@
+fade_pct,your_method_day,voltage_alarm_day,cusum_day,lead_time_vs_voltage_days,lead_time_vs_cusum_days
+20%,never,never,230,N/A (baseline B never fired),N/A (baseline C never fired)
+40%,never,never,209,N/A (baseline B never fired),N/A (baseline C never fired)
+60%,184,never,205,N/A (baseline B never fired),21
