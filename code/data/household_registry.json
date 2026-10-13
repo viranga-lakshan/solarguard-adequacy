@@ -1,0 +1,476 @@
+{
+  "schema_version": 1,
+  "households": {
+    "mafate_h1": {
+      "household_id": "mafate_h1",
+      "site": "Mafate",
+      "unit": "h1",
+      "origin": "pretrained_benchmark",
+      "status": "active",
+      "feature_tier": "weather_aware",
+      "feature_cols": [
+        "Hour",
+        "DayOfWeek",
+        "Month_sin",
+        "Month_cos",
+        "Trend_days",
+        "Gincl",
+        "Ta"
+      ],
+      "model_paths": {
+        "q10": "models/mafate_h1_q10.pkl",
+        "q50": "models/mafate_h1_q50.pkl",
+        "q90": "models/mafate_h1_q90.pkl",
+        "qtau": "models/mafate_h1_qtau.pkl"
+      },
+      "tau": 0.5,
+      "trend_origin": "2020-05-01T00:00:00",
+      "battery_metric": "voltage_v",
+      "battery_ok_threshold": 47.0,
+      "battery_cutoff_threshold": 46.0,
+      "nominal_system_voltage_v": 48.0,
+      "vacancy_float_threshold": 57.54,
+      "vacancy_load_w": 5.0,
+      "advisory_suppression_w": 50.0,
+      "critical_suppression_w": 100.0
+    },
+    "mafate_h2": {
+      "household_id": "mafate_h2",
+      "site": "Mafate",
+      "unit": "h2",
+      "origin": "pretrained_benchmark",
+      "status": "active",
+      "feature_tier": "weather_aware",
+      "feature_cols": [
+        "Hour",
+        "DayOfWeek",
+        "Month_sin",
+        "Month_cos",
+        "Trend_days",
+        "Gincl",
+        "Ta"
+      ],
+      "model_paths": {
+        "q10": "models/mafate_h2_q10.pkl",
+        "q50": "models/mafate_h2_q50.pkl",
+        "q90": "models/mafate_h2_q90.pkl",
+        "qtau": "models/mafate_h2_qtau.pkl"
+      },
+      "tau": 0.5,
+      "trend_origin": "2020-05-01T00:00:00",
+      "battery_metric": "voltage_v",
+      "battery_ok_threshold": 47.0,
+      "battery_cutoff_threshold": 46.0,
+      "nominal_system_voltage_v": 48.0,
+      "vacancy_float_threshold": 57.54,
+      "vacancy_load_w": 5.0,
+      "advisory_suppression_w": 50.0,
+      "critical_suppression_w": 100.0
+    },
+    "mafate_h3": {
+      "household_id": "mafate_h3",
+      "site": "Mafate",
+      "unit": "h3",
+      "origin": "pretrained_benchmark",
+      "status": "active",
+      "feature_tier": "weather_aware",
+      "feature_cols": [
+        "Hour",
+        "DayOfWeek",
+        "Month_sin",
+        "Month_cos",
+        "Trend_days",
+        "Gincl",
+        "Ta"
+      ],
+      "model_paths": {
+        "q10": "models/mafate_h3_q10.pkl",
+        "q50": "models/mafate_h3_q50.pkl",
+        "q90": "models/mafate_h3_q90.pkl",
+        "qtau": "models/mafate_h3_qtau.pkl"
+      },
+      "tau": 0.5,
+      "trend_origin": "2020-05-01T00:00:00",
+      "battery_metric": "voltage_v",
+      "battery_ok_threshold": 47.0,
+      "battery_cutoff_threshold": 46.0,
+      "nominal_system_voltage_v": 48.0,
+      "vacancy_float_threshold": 57.54,
+      "vacancy_load_w": 5.0,
+      "advisory_suppression_w": 50.0,
+      "critical_suppression_w": 100.0
+    },
+    "heed_cpe1": {
+      "household_id": "heed_cpe1",
+      "site": "HEED Rwanda",
+      "unit": "CPE1",
+      "origin": "pretrained_benchmark",
+      "status": "active",
+      "feature_tier": "telemetry_only",
+      "feature_cols": [
+        "Hour",
+        "DayOfWeek",
+        "Month_sin",
+        "Month_cos",
+        "Trend_days"
+      ],
+      "model_paths": {
+        "q10": "models/heed_cpe1_q10.pkl",
+        "q50": "models/heed_cpe1_q50.pkl",
+        "q90": "models/heed_cpe1_q90.pkl",
+        "qtau": "models/heed_cpe1_qtau.pkl"
+      },
+      "tau": 0.5,
+      "trend_origin": "2019-05-25T15:07:00",
+      "battery_metric": "soc_pct",
+      "battery_ok_threshold": 20.0,
+      "battery_cutoff_threshold": 10.0,
+      "nominal_system_voltage_v": null,
+      "vacancy_float_threshold": 95.0,
+      "vacancy_load_w": 5.0,
+      "advisory_suppression_w": 50.0,
+      "critical_suppression_w": 100.0
+    },
+    "star_a": {
+      "household_id": "star_a",
+      "site": "STAR Sierra Leone",
+      "unit": "A",
+      "origin": "pretrained_benchmark",
+      "status": "active",
+      "feature_tier": "telemetry_only",
+      "feature_cols": [
+        "Hour",
+        "DayOfWeek",
+        "Month_sin",
+        "Month_cos",
+        "Trend_days"
+      ],
+      "model_paths": {
+        "q10": "models/star_a_q10.pkl",
+        "q50": "models/star_a_q50.pkl",
+        "q90": "models/star_a_q90.pkl",
+        "qtau": "models/star_a_qtau.pkl"
+      },
+      "tau": 0.95,
+      "trend_origin": "2018-06-08T11:13:38",
+      "battery_metric": "soc_pct",
+      "battery_ok_threshold": 20.0,
+      "battery_cutoff_threshold": 10.0,
+      "nominal_system_voltage_v": null,
+      "vacancy_float_threshold": 95.0,
+      "vacancy_load_w": 5.0,
+      "advisory_suppression_w": 50.0,
+      "critical_suppression_w": 100.0
+    },
+    "star_b": {
+      "household_id": "star_b",
+      "site": "STAR Sierra Leone",
+      "unit": "B",
+      "origin": "pretrained_benchmark",
+      "status": "active",
+      "feature_tier": "telemetry_only",
+      "feature_cols": [
+        "Hour",
+        "DayOfWeek",
+        "Month_sin",
+        "Month_cos",
+        "Trend_days"
+      ],
+      "model_paths": {
+        "q10": "models/star_b_q10.pkl",
+        "q50": "models/star_b_q50.pkl",
+        "q90": "models/star_b_q90.pkl",
+        "qtau": "models/star_b_qtau.pkl"
+      },
+      "tau": 0.5,
+      "trend_origin": "2018-07-17T12:02:19",
+      "battery_metric": "soc_pct",
+      "battery_ok_threshold": 20.0,
+      "battery_cutoff_threshold": 10.0,
+      "nominal_system_voltage_v": null,
+      "vacancy_float_threshold": 95.0,
+      "vacancy_load_w": 5.0,
+      "advisory_suppression_w": 50.0,
+      "critical_suppression_w": 100.0
+    },
+    "star_c": {
+      "household_id": "star_c",
+      "site": "STAR Sierra Leone",
+      "unit": "C",
+      "origin": "pretrained_benchmark",
+      "status": "active",
+      "feature_tier": "telemetry_only",
+      "feature_cols": [
+        "Hour",
+        "DayOfWeek",
+        "Month_sin",
+        "Month_cos",
+        "Trend_days"
+      ],
+      "model_paths": {
+        "q10": "models/star_c_q10.pkl",
+        "q50": "models/star_c_q50.pkl",
+        "q90": "models/star_c_q90.pkl",
+        "qtau": "models/star_c_qtau.pkl"
+      },
+      "tau": 0.95,
+      "trend_origin": "2018-01-02T13:12:16",
+      "battery_metric": "soc_pct",
+      "battery_ok_threshold": 20.0,
+      "battery_cutoff_threshold": 10.0,
+      "nominal_system_voltage_v": null,
+      "vacancy_float_threshold": 95.0,
+      "vacancy_load_w": 5.0,
+      "advisory_suppression_w": 50.0,
+      "critical_suppression_w": 100.0
+    },
+    "star_d": {
+      "household_id": "star_d",
+      "site": "STAR Sierra Leone",
+      "unit": "D",
+      "origin": "pretrained_benchmark",
+      "status": "active",
+      "feature_tier": "telemetry_only",
+      "feature_cols": [
+        "Hour",
+        "DayOfWeek",
+        "Month_sin",
+        "Month_cos",
+        "Trend_days"
+      ],
+      "model_paths": {
+        "q10": "models/star_d_q10.pkl",
+        "q50": "models/star_d_q50.pkl",
+        "q90": "models/star_d_q90.pkl",
+        "qtau": "models/star_d_qtau.pkl"
+      },
+      "tau": 0.5,
+      "trend_origin": "2018-03-28T06:31:11",
+      "battery_metric": "soc_pct",
+      "battery_ok_threshold": 20.0,
+      "battery_cutoff_threshold": 10.0,
+      "nominal_system_voltage_v": null,
+      "vacancy_float_threshold": 95.0,
+      "vacancy_load_w": 5.0,
+      "advisory_suppression_w": 50.0,
+      "critical_suppression_w": 100.0
+    },
+    "jharkhand_house_2": {
+      "household_id": "jharkhand_house_2",
+      "site": "Jharkhand India",
+      "unit": "House_2",
+      "origin": "pretrained_benchmark",
+      "status": "active",
+      "feature_tier": "telemetry_only",
+      "feature_cols": [
+        "Hour",
+        "DayOfWeek",
+        "Month_sin",
+        "Month_cos",
+        "Trend_days"
+      ],
+      "model_paths": {
+        "q10": "models/jharkhand_house_2_q10.pkl",
+        "q50": "models/jharkhand_house_2_q50.pkl",
+        "q90": "models/jharkhand_house_2_q90.pkl",
+        "qtau": "models/jharkhand_house_2_qtau.pkl"
+      },
+      "tau": 0.5,
+      "trend_origin": "2015-06-23T11:43:00",
+      "battery_metric": "voltage_v",
+      "battery_ok_threshold": 11.5,
+      "battery_cutoff_threshold": 11.25,
+      "nominal_system_voltage_v": 12.0,
+      "vacancy_float_threshold": 13.52,
+      "vacancy_load_w": 5.0,
+      "advisory_suppression_w": 50.0,
+      "critical_suppression_w": 100.0
+    },
+    "jharkhand_house_3": {
+      "household_id": "jharkhand_house_3",
+      "site": "Jharkhand India",
+      "unit": "House_3",
+      "origin": "pretrained_benchmark",
+      "status": "active",
+      "feature_tier": "telemetry_only",
+      "feature_cols": [
+        "Hour",
+        "DayOfWeek",
+        "Month_sin",
+        "Month_cos",
+        "Trend_days"
+      ],
+      "model_paths": {
+        "q10": "models/jharkhand_house_3_q10.pkl",
+        "q50": "models/jharkhand_house_3_q50.pkl",
+        "q90": "models/jharkhand_house_3_q90.pkl",
+        "qtau": "models/jharkhand_house_3_qtau.pkl"
+      },
+      "tau": 0.95,
+      "trend_origin": "2015-06-23T12:28:00",
+      "battery_metric": "voltage_v",
+      "battery_ok_threshold": 11.5,
+      "battery_cutoff_threshold": 11.25,
+      "nominal_system_voltage_v": 12.0,
+      "vacancy_float_threshold": 14.2,
+      "vacancy_load_w": 5.0,
+      "advisory_suppression_w": 50.0,
+      "critical_suppression_w": 100.0
+    },
+    "jharkhand_house_4": {
+      "household_id": "jharkhand_house_4",
+      "site": "Jharkhand India",
+      "unit": "House_4",
+      "origin": "pretrained_benchmark",
+      "status": "active",
+      "feature_tier": "telemetry_only",
+      "feature_cols": [
+        "Hour",
+        "DayOfWeek",
+        "Month_sin",
+        "Month_cos",
+        "Trend_days"
+      ],
+      "model_paths": {
+        "q10": "models/jharkhand_house_4_q10.pkl",
+        "q50": "models/jharkhand_house_4_q50.pkl",
+        "q90": "models/jharkhand_house_4_q90.pkl",
+        "qtau": "models/jharkhand_house_4_qtau.pkl"
+      },
+      "tau": 0.5,
+      "trend_origin": "2015-06-23T12:00:00",
+      "battery_metric": "voltage_v",
+      "battery_ok_threshold": 11.5,
+      "battery_cutoff_threshold": 11.25,
+      "nominal_system_voltage_v": 12.0,
+      "vacancy_float_threshold": 13.58,
+      "vacancy_load_w": 5.0,
+      "advisory_suppression_w": 50.0,
+      "critical_suppression_w": 100.0
+    },
+    "song_kenya_h42": {
+      "household_id": "song_kenya_h42",
+      "site": "SONG Kenya",
+      "unit": "42",
+      "origin": "pretrained_benchmark",
+      "status": "active",
+      "feature_tier": "telemetry_only",
+      "feature_cols": [
+        "Hour",
+        "DayOfWeek",
+        "Month_sin",
+        "Month_cos",
+        "Trend_days"
+      ],
+      "model_paths": {
+        "q10": "models/song_kenya_h42_q10.pkl",
+        "q50": "models/song_kenya_h42_q50.pkl",
+        "q90": "models/song_kenya_h42_q90.pkl",
+        "qtau": "models/song_kenya_h42_qtau.pkl"
+      },
+      "tau": 0.5,
+      "trend_origin": "2016-07-01T04:00:00",
+      "battery_metric": "soc_pct",
+      "battery_ok_threshold": 20.0,
+      "battery_cutoff_threshold": 10.0,
+      "nominal_system_voltage_v": null,
+      "vacancy_float_threshold": 95.0,
+      "vacancy_load_w": 5.0,
+      "advisory_suppression_w": 50.0,
+      "critical_suppression_w": 100.0
+    },
+    "song_kenya_h48": {
+      "household_id": "song_kenya_h48",
+      "site": "SONG Kenya",
+      "unit": "48",
+      "origin": "pretrained_benchmark",
+      "status": "active",
+      "feature_tier": "telemetry_only",
+      "feature_cols": [
+        "Hour",
+        "DayOfWeek",
+        "Month_sin",
+        "Month_cos",
+        "Trend_days"
+      ],
+      "model_paths": {
+        "q10": "models/song_kenya_h48_q10.pkl",
+        "q50": "models/song_kenya_h48_q50.pkl",
+        "q90": "models/song_kenya_h48_q90.pkl",
+        "qtau": "models/song_kenya_h48_qtau.pkl"
+      },
+      "tau": 0.5,
+      "trend_origin": "2016-07-01T05:00:00",
+      "battery_metric": "soc_pct",
+      "battery_ok_threshold": 20.0,
+      "battery_cutoff_threshold": 10.0,
+      "nominal_system_voltage_v": null,
+      "vacancy_float_threshold": 95.0,
+      "vacancy_load_w": 5.0,
+      "advisory_suppression_w": 50.0,
+      "critical_suppression_w": 100.0
+    },
+    "song_kenya_h49": {
+      "household_id": "song_kenya_h49",
+      "site": "SONG Kenya",
+      "unit": "49",
+      "origin": "pretrained_benchmark",
+      "status": "active",
+      "feature_tier": "telemetry_only",
+      "feature_cols": [
+        "Hour",
+        "DayOfWeek",
+        "Month_sin",
+        "Month_cos",
+        "Trend_days"
+      ],
+      "model_paths": {
+        "q10": "models/song_kenya_h49_q10.pkl",
+        "q50": "models/song_kenya_h49_q50.pkl",
+        "q90": "models/song_kenya_h49_q90.pkl",
+        "qtau": "models/song_kenya_h49_qtau.pkl"
+      },
+      "tau": 0.5,
+      "trend_origin": "2016-07-02T08:00:00",
+      "battery_metric": "soc_pct",
+      "battery_ok_threshold": 20.0,
+      "battery_cutoff_threshold": 10.0,
+      "nominal_system_voltage_v": null,
+      "vacancy_float_threshold": 95.0,
+      "vacancy_load_w": 5.0,
+      "advisory_suppression_w": 50.0,
+      "critical_suppression_w": 100.0
+    },
+    "song_kenya_h51": {
+      "household_id": "song_kenya_h51",
+      "site": "SONG Kenya",
+      "unit": "51",
+      "origin": "pretrained_benchmark",
+      "status": "active",
+      "feature_tier": "telemetry_only",
+      "feature_cols": [
+        "Hour",
+        "DayOfWeek",
+        "Month_sin",
+        "Month_cos",
+        "Trend_days"
+      ],
+      "model_paths": {
+        "q10": "models/song_kenya_h51_q10.pkl",
+        "q50": "models/song_kenya_h51_q50.pkl",
+        "q90": "models/song_kenya_h51_q90.pkl",
+        "qtau": "models/song_kenya_h51_qtau.pkl"
+      },
+      "tau": 0.5,
+      "trend_origin": "2016-07-01T00:00:00",
+      "battery_metric": "soc_pct",
+      "battery_ok_threshold": 20.0,
+      "battery_cutoff_threshold": 10.0,
+      "nominal_system_voltage_v": null,
+      "vacancy_float_threshold": 95.0,
+      "vacancy_load_w": 5.0,
+      "advisory_suppression_w": 50.0,
+      "critical_suppression_w": 100.0
+    }
+  }
+}
