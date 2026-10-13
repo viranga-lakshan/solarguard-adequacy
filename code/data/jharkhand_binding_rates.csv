@@ -1,0 +1,4 @@
+house,total_hours,binding_hours,binding_rate_pct,min_battery_v,max_battery_v,mean_battery_v,dropped_sentinel_readings
+House_2,5329.3,3.9,0.0726,11.32,15.15,12.69,0
+House_3,5328.1,0.0,0.0,11.86,15.2,13.12,0
+House_4,5328.4,0.3,0.0063,11.49,18.56,12.75,8

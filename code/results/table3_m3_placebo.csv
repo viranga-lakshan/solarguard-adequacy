@@ -1,0 +1,5 @@
+house,mean_suppression_w,binding_rate_pct,pct_hours_suppression_gt_100w,alert_window_rate_pct,result,site,tau,test_MAE_W,test_CRPS_W,coverage_pct
+h1,23.82,0.0,8.8513,0.0,E4 PASS,Mafate,,,,
+h2,18.23,0.0,0.0,0.0,E4 PASS,Mafate,,,,
+h3,17.52,0.0,0.9368,0.0,E4 PASS,Mafate,,,,
+heed_cpe1,0.0,,,,E4 PASS,HEED Hall,0.5,14.22,14.48,98.1

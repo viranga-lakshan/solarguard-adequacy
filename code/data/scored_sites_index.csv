@@ -1,0 +1,13 @@
+site,unit,stem,n_rows,mean_suppression_w,mean_load_w
+HEED Hall,CPE1,heed_cpe1,460754,0.0,12.3057
+STAR,A,star_a,1789,16.4503,13.5154
+STAR,B,star_b,1526,7.7291,71.6592
+STAR,C,star_c,991,91.3261,36.44
+STAR,D,star_d,606,9.6865,15.3416
+Jharkhand,House_2,jharkhand_house_2,319756,1.44,5.5063
+Jharkhand,House_3,jharkhand_house_3,319684,6.9294,4.4571
+Jharkhand,House_4,jharkhand_house_4,319713,1.3443,6.726
+SONG Kenya,51,song_kenya_h51,6952,0.072,0.3425
+SONG Kenya,42,song_kenya_h42,5668,0.0566,0.4423
+SONG Kenya,49,song_kenya_h49,6888,0.0072,0.2673
+SONG Kenya,48,song_kenya_h48,6946,0.0336,0.2656

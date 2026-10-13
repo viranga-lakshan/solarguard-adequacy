@@ -1,0 +1,2 @@
+rows,anchors,soc_min_pct,soc_max_pct,corr_soc_ubat,drift_flag_fraction,result
+474323,970,77.51,100.0,0.6056,0.0,PASS

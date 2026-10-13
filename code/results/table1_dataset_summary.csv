@@ -1,0 +1,6 @@
+site,country,houses_or_cpes,duration,resolution,mean_binding_rate_pct
+Mafate,France (Reunion),3,12 months,1-min,0.0
+HEED Hall,Rwanda,1,~21 months,irregular (~15-min battery log),
+STAR A-D,Brazil,4,225-297 days/site,irregular,0.0001
+Jharkhand,India,3,~222 days,60-sec,0.0263
+SONG Kenya,Kenya,4,45-82 active days/household (of a 146-day window),30-min,0.4568
