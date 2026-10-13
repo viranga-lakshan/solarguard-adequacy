@@ -1,0 +1,4 @@
+house,mean_suppression_w,binding_rate_pct,pct_hours_suppression_gt_100w,alert_window_rate_pct,result
+h1,23.82,0.0,8.8513,0.0,E4 PASS
+h2,18.23,0.0,0.0,0.0,E4 PASS
+h3,17.52,0.0,0.9368,0.0,E4 PASS

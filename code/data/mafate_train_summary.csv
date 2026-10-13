@@ -1,0 +1,4 @@
+house,tau,n_unconstrained_rows,n_fit_sampled,n_calibration,n_test,test_MAE_W_qtau,test_RMSE_W_qtau,test_MAE_W_q50,test_CRPS_W,q10_q90_coverage_pct
+h1,0.5,327129,20000,49069,81783,79.41,121.19,79.41,49.03,85.87
+h2,0.5,220521,20000,33078,55131,43.13,67.46,43.13,27.03,71.96
+h3,0.5,318728,20000,47809,79683,62.97,88.42,62.97,40.16,65.1

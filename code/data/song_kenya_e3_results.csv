@@ -1,0 +1,5 @@
+household,status,tau,n_unconstrained_rows,n_fit_sampled,n_test,test_MAE_W,test_CRPS_W,Q10_Q90_coverage_pct,mean_suppression_w_all,mean_suppression_w_during_constrained,mean_suppression_w_during_unconstrained,mean_load_w
+51,fitted,0.5,6850,4000,1713,0.2436,0.1565,96.5,0.072,0.0477,0.0723,0.3425
+42,fitted,0.5,5668,3400,1417,0.3925,0.2485,94.99,0.0566,,0.0566,0.4423
+49,fitted,0.5,6888,4000,1722,0.3275,0.2032,93.9,0.0072,,0.0072,0.2673
+48,fitted,0.5,6921,4000,1731,0.24,0.1422,95.55,0.0336,0.0,0.0337,0.2656

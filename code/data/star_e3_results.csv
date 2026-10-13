@@ -1,0 +1,5 @@
+site,status,tau,n_rows,n_fit,n_calibration,n_test,test_MAE_W,test_CRPS_W,Q10_Q90_coverage_pct,mean_suppression_w,mean_load_w
+A,fitted,0.95,1789,1073,268,448,33.47,8.8,10.71,16.45,13.52
+B,fitted,0.5,1526,915,229,382,50.97,27.47,52.88,7.73,71.66
+C,fitted,0.95,991,594,149,248,134.02,27.64,96.37,91.33,36.44
+D,fitted,0.5,606,363,91,152,20.43,10.46,67.11,9.69,15.34
