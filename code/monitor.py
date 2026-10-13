@@ -28,6 +28,14 @@ import numpy as np
 import pandas as pd
 
 from injection import inject_degradation
+from onboarding import (
+    build_features,
+    compute_alerts,
+    detect_vacancy,
+    get_household,
+    resolve_model_path,
+    standardize_telemetry,
+)
 from paths import DATA_DIR, MODELS_DIR
 from train_model import FEATURE_COLS
 
@@ -95,6 +103,67 @@ def first_true_day(flag: pd.Series, start: pd.Timestamp) -> str:
     if hits.empty:
         return "never fired"
     return str(hits.index[0])
+
+
+def monitor_household(
+    household_id: str, new_telemetry_df: pd.DataFrame, registry_path=None
+) -> pd.DataFrame:
+    """Dynamically loads household_id from household_registry.json,
+    runs inference using its specific model_qtau.pkl, applies the vacancy guard,
+    computes rolling suppression, and evaluates the multi-tier alert criteria.
+
+    new_telemetry_df follows the onboarding contract (timestamp, load_w,
+    voltage_v and/or soc_pct, plus irradiance_w_m2/temperature_c for
+    weather_aware units) and is scored at hourly resolution. Returns an hourly
+    frame with load_w, counterfactual_w (L-hat_tau), q10_w/q90_w (descriptive,
+    rearranged), suppression_w, the rolling means, vacant, instant_tier and the
+    day-level alert_tier (see onboarding.compute_alerts; per-day table in
+    result.attrs['daily'])."""
+    entry = get_household(household_id, registry_path)
+    if entry["status"] != "active":
+        raise ValueError(f"household {household_id!r} is {entry['status']!r}, not active")
+
+    hourly = standardize_telemetry(new_telemetry_df)
+    metric = hourly.attrs["battery_metric"]
+    if metric != entry["battery_metric"]:
+        raise ValueError(
+            f"{household_id!r} is monitored on {entry['battery_metric']!r} but telemetry only carries {metric!r}"
+        )
+    weather = entry["feature_tier"] == "weather_aware"
+    if weather and not {"irradiance_w_m2", "temperature_c"} <= set(hourly.columns):
+        raise ValueError(f"{household_id!r} is weather_aware: telemetry needs irradiance_w_m2 and temperature_c")
+
+    feature_cols = entry["feature_cols"]
+    feats = build_features(hourly, pd.Timestamp(entry["trend_origin"]), weather)[feature_cols]
+    scorable = feats.notna().all(axis=1) & hourly["valid"]
+
+    def _predict(name: str) -> pd.Series:
+        with open(resolve_model_path(entry["model_paths"][name]), "rb") as fh:
+            model = pickle.load(fh)
+        out = pd.Series(np.nan, index=hourly.index)
+        if scorable.any():
+            out.loc[scorable] = model.predict(feats.loc[scorable])
+        return out
+
+    counterfactual = _predict("qtau")
+    suppression = (counterfactual - hourly["load_w"]).clip(lower=0.0)
+
+    vacant = detect_vacancy(
+        hourly["load_w"], hourly["battery"], entry["vacancy_float_threshold"], entry["vacancy_load_w"]
+    )
+    alerts = compute_alerts(
+        suppression, hourly["battery"], vacant, entry["battery_ok_threshold"],
+        entry["advisory_suppression_w"], entry["critical_suppression_w"],
+    )
+
+    q10, q90 = np.minimum(_predict("q10"), _predict("q90")), np.maximum(_predict("q10"), _predict("q90"))
+    result = pd.DataFrame(
+        {"load_w": hourly["load_w"], "battery": hourly["battery"], "counterfactual_w": counterfactual,
+         "q10_w": q10, "q90_w": q90, "suppression_w": suppression},
+        index=hourly.index,
+    ).join(alerts)
+    result.attrs["daily"] = alerts.attrs["daily"]
+    return result
 
 
 def main() -> None:
