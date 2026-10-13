@@ -301,12 +301,15 @@ def onboard_household(
     registry_path: Path | None = None,
     models_dir: Path | None = None,
     dry_run: bool = False,
+    telemetry_dir: Path | None = None,
 ) -> OnboardingResult:
     """Validate commissioning telemetry, train Algorithm 1 and register the household.
 
     `telemetry` is the baseline period (>= MIN_VALID_DAYS valid unconstrained days).
     Never touches an existing registry entry or model file: a duplicate id is
-    rejected. dry_run runs every check and the fit but writes nothing."""
+    rejected. dry_run runs every check and the fit but writes nothing.
+    telemetry_dir (opt-in; the CLI passes data/telemetry) also stores the
+    baseline telemetry as <id>.parquet so the dashboard has data to show."""
     registry_path = Path(registry_path or REGISTRY_PATH)
     models_dir = Path(models_dir or MODELS_DIR)
 
@@ -401,6 +404,12 @@ def onboard_household(
                 with open(path, "wb") as fh:
                     pickle.dump(models[q], fh)
                 written.append(path)
+            if telemetry_dir is not None:
+                Path(telemetry_dir).mkdir(parents=True, exist_ok=True)
+                saved = Path(telemetry_dir) / f"{household_id}.parquet"
+                raw = telemetry if "timestamp" in telemetry.columns else telemetry.rename_axis("timestamp").reset_index()
+                raw.to_parquet(saved)
+                written.append(saved)
             registry["households"][household_id] = entry
             save_registry(registry, registry_path)
         except Exception:
@@ -520,7 +529,7 @@ def compute_alerts(
         },
         index=supp.index,
     )
-    out.attrs["daily"] = daily
+    out.attrs["daily"] = daily.to_dict("index")  # plain dict: DataFrames in attrs break pandas concat
     return out
 
 
@@ -537,6 +546,7 @@ def main() -> None:
     result = onboard_household(
         args.household_id, pd.read_csv(args.csv, parse_dates=["timestamp"]),
         site=args.site, system_voltage_v=args.system_voltage, dry_run=args.dry_run,
+        telemetry_dir=DATA_DIR / "telemetry",
     )
     print(result)
     raise SystemExit(0 if result.onboarded else 1)

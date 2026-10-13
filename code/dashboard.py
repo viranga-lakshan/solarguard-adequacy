@@ -10,6 +10,12 @@ Covers all five sites. Mafate keeps the richer view because it is the only site
 with on-site irradiance and battery voltage channels, and it is the site the
 injection demonstration (FR-07) runs on. The other four are read from the
 normalised frames written by score_sites.py.
+
+The site/unit dropdown is built from data/household_registry.json, so a household
+registered by onboarding.py appears automatically. Those households have no
+pre-scored artefact: their view is computed live from their stored telemetry
+(data/telemetry/<id>.parquet, plus an optional CSV upload) through
+monitor.monitor_household, which keeps the registry the single source of truth.
 """
 
 from __future__ import annotations
@@ -18,6 +24,8 @@ import pandas as pd
 import streamlit as st
 
 from injection import inject_degradation
+from monitor import monitor_household
+from onboarding import REGISTRY_PATH, load_registry
 from paths import DATA_DIR
 
 st.set_page_config(page_title="SolarGuard -- Adequacy Monitor", layout="wide")
@@ -116,25 +124,55 @@ def render_binding_table(site: str) -> None:
         st.dataframe(table, use_container_width=True)
 
 
+def build_unit_map() -> tuple[dict[str, dict[str, str]], set[str]]:
+    """site -> {unit label: household_id}. Benchmark units keep their original
+    site/unit labels; any other registry entry (newly onboarded) is grouped
+    under the site name it was registered with. Falls back to the original
+    hard-coded lists if the registry is unreadable."""
+    units = {"Mafate": {tag: f"mafate_{tag}" for tag in ("h1", "h2", "h3")}}
+    units.update({name: dict(unit_map) for name, unit_map in OTHER_SITES.items()})
+    try:
+        households = load_registry(REGISTRY_PATH)["households"]
+    except (OSError, ValueError, KeyError):
+        return units, set()
+    known = {hid for unit_map in units.values() for hid in unit_map.values()}
+    onboarded = set()
+    for hid, entry in households.items():
+        if hid in known or entry.get("status") != "active":
+            continue
+        units.setdefault(entry.get("site", "Unspecified"), {})[entry.get("unit", hid)] = hid
+        onboarded.add(hid)
+    return units, onboarded
+
+
+UNIT_MAP, ONBOARDED_IDS = build_unit_map()
+
 # --------------------------------------------------------------------------
 # Sidebar
 # --------------------------------------------------------------------------
 with st.sidebar:
     st.header("Controls")
-    site = st.selectbox("Site", ["Mafate"] + list(OTHER_SITES))
+    site = st.selectbox("Site", list(UNIT_MAP))
 
     if site == "Mafate":
-        unit_label = st.selectbox("House", ["h1", "h2", "h3"])
+        unit_label = st.selectbox("House", list(UNIT_MAP[site]))
     else:
-        unit_label = st.selectbox("Unit", list(OTHER_SITES[site]))
+        unit_label = st.selectbox("Unit", list(UNIT_MAP[site]))
 
-st.caption(SITE_NOTES.get(site, ""))
+selected_id = UNIT_MAP[site][unit_label]
+is_onboarded = selected_id in ONBOARDED_IDS
+
+st.caption(
+    SITE_NOTES.get(site, "")
+    if not is_onboarded
+    else "Newly onboarded household: scored live from its own telemetry with its own Algorithm 1 models."
+)
 
 
 # --------------------------------------------------------------------------
 # Mafate: full view, with the injection demonstration
 # --------------------------------------------------------------------------
-if site == "Mafate":
+if site == "Mafate" and not is_onboarded:
     df = load_mafate()
     house_tag = unit_label
     house_col = {"h1": "Load_h1", "h2": "Load_h2", "h3": "Load_h3"}[house_tag]
@@ -207,8 +245,8 @@ if site == "Mafate":
 # --------------------------------------------------------------------------
 # Every other site: normalised scored frame from score_sites.py
 # --------------------------------------------------------------------------
-else:
-    stem = OTHER_SITES[site][unit_label]
+elif not is_onboarded:
+    stem = UNIT_MAP[site][unit_label]
     df = load_scored(stem)
 
     with st.sidebar:
@@ -315,3 +353,105 @@ else:
     st.line_chart(downsample_for_chart(alert_df))
 
     render_binding_table(site)
+
+
+# --------------------------------------------------------------------------
+# Newly onboarded household: live scoring via monitor_household
+# --------------------------------------------------------------------------
+else:
+    TIER_BADGE = {
+        "NORMAL": "\U0001F7E2 NORMAL",
+        "ADVISORY": "\U0001F7E1 ADVISORY",
+        "CRITICAL": "\U0001F534 CRITICAL",
+        "VACANT/INACTIVE": "\u26AA VACANT / INACTIVE",
+        "VOLTAGE_ALARM": "\U0001F7E0 VOLTAGE ALARM",
+        "UNKNOWN": "\u26AB INSUFFICIENT DATA",
+    }
+    TIER_LEVEL = {"NORMAL": 0, "ADVISORY": 1, "CRITICAL": 2}
+
+    entry = load_registry(REGISTRY_PATH)["households"][selected_id]
+    stored = DATA_DIR / "telemetry" / f"{selected_id}.parquet"
+
+    telemetry = pd.read_parquet(stored) if stored.exists() else None
+    with st.sidebar:
+        upload = st.file_uploader(
+            "Add telemetry (CSV)", type="csv",
+            help="Columns: timestamp, load_w, voltage_v or soc_pct, and irradiance_w_m2 / "
+            "temperature_c for weather-aware units. Merged with any stored telemetry.",
+        )
+    if upload is not None:
+        extra = pd.read_csv(upload, parse_dates=["timestamp"])
+        telemetry = extra if telemetry is None else pd.concat([telemetry, extra], ignore_index=True)
+    if telemetry is None:
+        st.info(
+            f"No telemetry stored for **{selected_id}** yet. Upload a CSV in the sidebar, or place "
+            f"it at `data/telemetry/{selected_id}.parquet` (written automatically by `onboarding.py`)."
+        )
+        st.stop()
+
+    @st.cache_data(show_spinner="Scoring household ...")
+    def score_household(household_id: str, frame: pd.DataFrame) -> pd.DataFrame:
+        frame = frame.drop_duplicates(subset="timestamp").sort_values("timestamp")
+        return monitor_household(household_id, frame, registry_path=REGISTRY_PATH)
+
+    try:
+        df = score_household(selected_id, telemetry)
+    except ValueError as exc:
+        st.error(f"Cannot score {selected_id}: {exc}")
+        st.stop()
+
+    with st.sidebar:
+        date_min, date_max = df.index.min().date(), df.index.max().date()
+        default_start = max(date_min, date_max - pd.Timedelta(days=21).to_pytimedelta())
+        date_range = st.slider(
+            "Date range", min_value=date_min, max_value=date_max, value=(default_start, date_max)
+        )
+    window = df.loc[str(date_range[0]): str(date_range[1])]
+    if window.empty:
+        st.warning("No data in the selected date range.")
+        st.stop()
+
+    batt_label = "Battery voltage (V)" if entry["battery_metric"] == "voltage_v" else "Battery SOC (%)"
+    ok = entry["battery_ok_threshold"]
+    latest_tier = str(df["alert_tier"].iloc[-1])  # whole record: the current status, not the slider's
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Mean suppression", f"{window['suppression_w'].mean():.1f} W")
+    c2.metric("Binding rate", f"{100.0 * (window['battery'] <= ok).mean():.3f}%")
+    c3.metric("Alert status", TIER_BADGE.get(latest_tier, latest_tier))
+    c4.metric("Vacant hours", f"{int(window['vacant'].sum())}")
+    st.caption(
+        f"{selected_id} | feature tier: {entry['feature_tier']} | tau = {entry['tau']} | "
+        f"Advisory {entry['advisory_suppression_w']:.0f}-{entry['critical_suppression_w']:.0f} W, "
+        f"Critical > {entry['critical_suppression_w']:.0f} W with {batt_label.lower()} above {ok:g}. "
+        f"Hourly resolution; the status shown is the latest day-level verdict."
+    )
+
+    st.subheader(f"Telemetry -- {batt_label}")
+    batt = window[["battery"]].rename(columns={"battery": batt_label}).copy()
+    batt["normal threshold"] = ok
+    st.line_chart(downsample_for_chart(batt))
+
+    st.subheader(f"Observed load vs. Q\u03c4 counterfactual -- {site} / {unit_label}")
+    band = window[["load_w", "counterfactual_w", "q10_w", "q90_w"]].copy()
+    band.columns = ["Observed", "Q\u03c4 counterfactual", "Q10", "Q90"]
+    st.line_chart(downsample_for_chart(band))
+
+    st.subheader("Estimated suppression (hourly) and 24h rolling mean")
+    supp = window[["suppression_w", "rolling_suppression_w"]].copy()
+    supp["advisory_threshold"] = entry["advisory_suppression_w"]
+    supp["critical_threshold"] = entry["critical_suppression_w"]
+    st.line_chart(downsample_for_chart(supp))
+
+    st.subheader("Alert tier timeline")
+    timeline = pd.DataFrame(
+        {"tier level (0 normal, 1 advisory, 2 critical)": window["alert_tier"].map(TIER_LEVEL)}
+    )
+    st.line_chart(downsample_for_chart(timeline))
+    daily_records = df.attrs.get("daily")
+    if daily_records:
+        daily = pd.DataFrame.from_dict(daily_records, orient="index")
+        st.dataframe(
+            daily[["alert_tier", "advisory_run_days", "critical_run_days", "vacant"]].tail(30),
+            use_container_width=True,
+        )
