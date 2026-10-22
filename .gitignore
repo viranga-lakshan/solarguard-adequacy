@@ -1,2 +1,5 @@
 # Delivery archive -- its contents are tracked unpacked in nibm-thesis-latex/
 nibm-thesis-latex.zip
+
+# Claude Code local settings and hooks (kept out of the repository)
+.claude/
