@@ -55,7 +55,9 @@ def test_existing_sites_and_units_still_listed():
         pytest.skip("run build_registry.py first")
     at = _run()
     assert not at.exception
-    assert list(at.selectbox[0].options) == list(LEGACY_UNITS)
+    # the original sites keep their place and order; households registered later (the
+    # registry feature) are listed after them, so extra sites must not fail this test
+    assert list(at.selectbox[0].options)[: len(LEGACY_UNITS)] == list(LEGACY_UNITS)
     for site, units in LEGACY_UNITS.items():
         at.selectbox[0].select(site).run()
         assert not at.exception, site
