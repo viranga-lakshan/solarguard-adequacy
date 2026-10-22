@@ -186,6 +186,13 @@ if site == "Mafate" and not is_onboarded:
 
     window = df.loc[str(date_range[0]): str(date_range[1])].copy()
 
+    if injection_level > 0 and date_range[0] <= date_min:
+        st.warning(
+            "The fade has no effect with the Date range starting on the first day of the record: "
+            "its healthy baseline is the load BEFORE the start date, and there is none. "
+            "Move the start of the Date range later (for example to 2020-11-01)."
+        )
+
     if injection_level > 0:
         injected = inject_degradation(df, injection_level / 100.0, str(date_range[0]), house_col)
         window[house_col] = injected.loc[window.index, house_col]
@@ -197,8 +204,12 @@ if site == "Mafate" and not is_onboarded:
 
     mean_suppression = window[f"suppression_w_{house_tag}"].mean()
     binding_rate = 100.0 * (window["Ubat"] <= 47.0).mean() if "Ubat" in window else float("nan")
-    rolling_supp = window[f"suppression_w_{house_tag}"].rolling(24 * 60).mean()
-    rolling_volt = window["Ubat"].rolling(24 * 60).mean()
+    # min_periods = 80% of the window, the same as monitor.check_alert: Mafate's 1-minute
+    # record has gaps, and a strict full-window requirement leaves the signal blank
+    # everywhere (verified: 100% NaN), so the alert light could never turn on.
+    _min_p = int(24 * 60 * 0.8)
+    rolling_supp = window[f"suppression_w_{house_tag}"].rolling(24 * 60, min_periods=_min_p).mean()
+    rolling_volt = window["Ubat"].rolling(24 * 60, min_periods=_min_p).mean()
     alert_active = (
         bool(((rolling_supp > 100.0) & (rolling_volt > 47.0)).fillna(False).iloc[-1])
         if len(window)
