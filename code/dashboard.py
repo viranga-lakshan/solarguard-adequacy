@@ -202,6 +202,8 @@ if site == "Mafate" and not is_onboarded:
         )
 
     if injection_level > 0:
+        from injection import inject_degradation  # imported on first use: it pulls in matplotlib (~1 s)
+
         injected = inject_degradation(df, injection_level / 100.0, str(date_range[0]), house_col)
         window[house_col] = injected.loc[window.index, house_col]
         # Suppression must be recomputed against the injected load -- the saved
