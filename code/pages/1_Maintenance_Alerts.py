@@ -114,7 +114,8 @@ for r in open_alerts:
         f"**Action:** send a technician to check the battery's usable capacity and the household's "
         f"connection. Check payment status first; do not pass this alert to billing."
     )
-    recent = frames[r["household_id"]].last("14D")
+    scored = frames[r["household_id"]]
+    recent = scored.loc[scored.index >= scored.index.max() - pd.Timedelta(days=14)]
     st.line_chart(
         pd.DataFrame(
             {
