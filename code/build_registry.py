@@ -107,5 +107,28 @@ def main() -> None:
     print(f"registered {len(UNITS)} benchmark units -> {REGISTRY_PATH}")
 
 
+def _started_by_streamlit() -> bool:
+    """True when this file is the entry point of `streamlit run` (as on the deployed
+    Streamlit Cloud app), False for a plain `python build_registry.py`."""
+    try:
+        from streamlit.runtime import exists
+    except ImportError:
+        return False
+    return exists()
+
+
 if __name__ == "__main__":
-    main()
+    if _started_by_streamlit():
+        # The cloud app was created with this file as its entry point. Serve the
+        # dashboard and the alerts page instead of rebuilding the registry; the page
+        # list is explicit, so this file's name never appears in the navigation.
+        import streamlit as st
+
+        st.navigation(
+            [
+                st.Page("dashboard.py", title="Adequacy Monitor", default=True),
+                st.Page("pages/1_Maintenance_Alerts.py", title="Maintenance Alerts"),
+            ]
+        ).run()
+    else:
+        main()
