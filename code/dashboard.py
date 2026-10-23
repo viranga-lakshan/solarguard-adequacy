@@ -81,12 +81,15 @@ SITE_NOTES = {
 }
 
 
-@st.cache_data
+# cache_resource keeps ONE shared copy in memory. cache_data would pickle and copy the
+# 159 MB Mafate frame on every rerun (every slider move); these frames are only ever
+# read here -- each view slices and .copy()s its own window before changing anything.
+@st.cache_resource
 def load_mafate() -> pd.DataFrame:
     return pd.read_parquet(DATA_DIR / "mafate_with_suppression.parquet")
 
 
-@st.cache_data
+@st.cache_resource
 def load_scored(stem: str) -> pd.DataFrame:
     return pd.read_parquet(DATA_DIR / f"scored_{stem}.parquet")
 
