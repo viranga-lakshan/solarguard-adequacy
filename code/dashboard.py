@@ -23,7 +23,6 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from injection import inject_degradation
 from monitor import monitor_household
 from onboarding import REGISTRY_PATH, load_registry
 from paths import DATA_DIR
@@ -81,12 +80,23 @@ SITE_NOTES = {
 }
 
 
-@st.cache_data
+# cache_resource keeps ONE shared copy in memory. cache_data would pickle and copy the
+# 159 MB Mafate frame on every rerun (every slider move); these frames are only ever
+# read here -- each view slices and .copy()s its own window before changing anything.
+MAFATE_COLUMNS = ["PV_total_w", "Ubat"] + [
+    f"{col}_{h}" for h in ("h1", "h2", "h3")
+    for col in ("q10_pred", "q90_pred", "qtau_pred", "suppression_w")
+] + ["Load_h1", "Load_h2", "Load_h3"]
+
+
+@st.cache_resource
 def load_mafate() -> pd.DataFrame:
-    return pd.read_parquet(DATA_DIR / "mafate_with_suppression.parquet")
+    # Only the 17 of 46 columns this view draws: about a third of the memory and read time,
+    # which matters on the small Streamlit Cloud machine.
+    return pd.read_parquet(DATA_DIR / "mafate_with_suppression.parquet", columns=MAFATE_COLUMNS)
 
 
-@st.cache_data
+@st.cache_resource
 def load_scored(stem: str) -> pd.DataFrame:
     return pd.read_parquet(DATA_DIR / f"scored_{stem}.parquet")
 
@@ -114,6 +124,56 @@ def downsample_for_chart(frame: pd.DataFrame, max_points: int = 2000) -> pd.Data
     return frame.resample(f"{target_freq_min}min").mean()
 
 
+@st.cache_data(show_spinner="Computing the Mafate view ...")
+def mafate_view(house_tag: str, start: str, end: str, injection_level: int) -> dict:
+    """Metrics and chart frames for one Mafate house, date range and fade level.
+
+    Cached per setting, so moving a slider back to a position already seen is instant
+    and only small, downsampled frames are kept -- not the full-resolution window."""
+    df = load_mafate()
+    house_col = {"h1": "Load_h1", "h2": "Load_h2", "h3": "Load_h3"}[house_tag]
+    supp_col = f"suppression_w_{house_tag}"
+    window = df.loc[start:end].copy()
+
+    if injection_level > 0:
+        from injection import inject_degradation  # imported on first use: it pulls in matplotlib (~1 s)
+
+        # The fade only needs the load column, so copy that rather than the whole frame.
+        injected = inject_degradation(df[[house_col]], injection_level / 100.0, start, house_col)
+        window[house_col] = injected.loc[window.index, house_col]
+        # Suppression must be recomputed against the injected load -- the saved
+        # suppression column reflects the real (uninjected) trace.
+        window[supp_col] = (window[f"qtau_pred_{house_tag}"] - window[house_col]).clip(lower=0.0)
+
+    # min_periods = 80% of the window, the same as monitor.check_alert: Mafate's 1-minute
+    # record has gaps, and a strict full-window requirement leaves the signal blank
+    # everywhere (verified: 100% NaN), so the alert light could never turn on.
+    min_p = int(24 * 60 * 0.8)
+    rolling_supp = window[supp_col].rolling(24 * 60, min_periods=min_p).mean()
+    rolling_volt = window["Ubat"].rolling(24 * 60, min_periods=min_p).mean()
+    fired = (rolling_supp > 100.0) & (rolling_volt > 47.0)
+
+    volt_df = window[["Ubat"]].copy()
+    volt_df["disconnect_threshold"] = 47.0
+    band = window[[house_col, f"qtau_pred_{house_tag}", f"q10_pred_{house_tag}", f"q90_pred_{house_tag}"]].copy()
+    band.columns = ["Observed", "Qτ counterfactual", "Q10", "Q90"]
+    alert_df = pd.DataFrame(
+        {
+            "rolling_suppression_w": rolling_supp,
+            "alert_fired": fired.astype(int) * rolling_supp.max() if rolling_supp.notna().any() else 0,
+        }
+    )
+    return {
+        "mean_suppression": float(window[supp_col].mean()),
+        "binding_rate": 100.0 * float((window["Ubat"] <= 47.0).mean()),
+        "alert_active": bool(fired.fillna(False).iloc[-1]) if len(window) else False,
+        "pv_chart": downsample_for_chart(window[["PV_total_w"]]),
+        "volt_chart": downsample_for_chart(volt_df),
+        "band_chart": downsample_for_chart(band),
+        "alert_chart": downsample_for_chart(alert_df),
+    }
+
+
 def render_binding_table(site: str) -> None:
     name = BINDING_TABLES.get(site)
     if not name:
@@ -121,7 +181,7 @@ def render_binding_table(site: str) -> None:
     table = load_table(name)
     if table is not None:
         st.subheader(f"Measured binding rate -- {site}")
-        st.dataframe(table, use_container_width=True)
+        st.dataframe(table, width="stretch")
 
 
 def build_unit_map() -> tuple[dict[str, dict[str, str]], set[str]]:
@@ -175,16 +235,19 @@ st.caption(
 if site == "Mafate" and not is_onboarded:
     df = load_mafate()
     house_tag = unit_label
-    house_col = {"h1": "Load_h1", "h2": "Load_h2", "h3": "Load_h3"}[house_tag]
 
     with st.sidebar:
         date_min, date_max = df.index.min().date(), df.index.max().date()
+        # Open on 45 days from 1 Nov 2020 -- day 184, the start date of the E1 fade test --
+        # rather than the whole year: 474k one-minute rows made every rerun slow, and this
+        # window lines the fade demonstration up with Section 5.4.5. The full year is
+        # still one slider drag away.
+        default_start = min(max(pd.Timestamp("2020-11-01").date(), date_min), date_max)
+        default_end = min(date_max, default_start + pd.Timedelta(days=44).to_pytimedelta())
         date_range = st.slider(
-            "Date range", min_value=date_min, max_value=date_max, value=(date_min, date_max)
+            "Date range", min_value=date_min, max_value=date_max, value=(default_start, default_end)
         )
         injection_level = st.slider("Injection level (capacity fade, %)", 0, 80, 0, step=10)
-
-    window = df.loc[str(date_range[0]): str(date_range[1])].copy()
 
     if injection_level > 0 and date_range[0] <= date_min:
         st.warning(
@@ -193,62 +256,26 @@ if site == "Mafate" and not is_onboarded:
             "Move the start of the Date range later (for example to 2020-11-01)."
         )
 
-    if injection_level > 0:
-        injected = inject_degradation(df, injection_level / 100.0, str(date_range[0]), house_col)
-        window[house_col] = injected.loc[window.index, house_col]
-        # Suppression must be recomputed against the injected load -- the saved
-        # suppression column reflects the real (uninjected) trace.
-        window[f"suppression_w_{house_tag}"] = (
-            window[f"qtau_pred_{house_tag}"] - window[house_col]
-        ).clip(lower=0.0)
-
-    mean_suppression = window[f"suppression_w_{house_tag}"].mean()
-    binding_rate = 100.0 * (window["Ubat"] <= 47.0).mean() if "Ubat" in window else float("nan")
-    # min_periods = 80% of the window, the same as monitor.check_alert: Mafate's 1-minute
-    # record has gaps, and a strict full-window requirement leaves the signal blank
-    # everywhere (verified: 100% NaN), so the alert light could never turn on.
-    _min_p = int(24 * 60 * 0.8)
-    rolling_supp = window[f"suppression_w_{house_tag}"].rolling(24 * 60, min_periods=_min_p).mean()
-    rolling_volt = window["Ubat"].rolling(24 * 60, min_periods=_min_p).mean()
-    alert_active = (
-        bool(((rolling_supp > 100.0) & (rolling_volt > 47.0)).fillna(False).iloc[-1])
-        if len(window)
-        else False
-    )
+    view = mafate_view(house_tag, str(date_range[0]), str(date_range[1]), injection_level)
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Mean suppression", f"{mean_suppression:.1f} W")
-    c2.metric("Binding rate", f"{binding_rate:.3f}%")
-    c3.metric("Alert status", "\U0001F534 ALERT" if alert_active else "\U0001F7E2 OK")
+    c1.metric("Mean suppression", f"{view['mean_suppression']:.1f} W")
+    c2.metric("Binding rate", f"{view['binding_rate']:.3f}%")
+    c3.metric("Alert status", "\U0001F534 ALERT" if view["alert_active"] else "\U0001F7E2 OK")
     c4.metric("System status", "Degraded (injected)" if injection_level > 0 else "Nominal")
 
     st.subheader("Solar PV power and battery voltage")
     left, right = st.columns(2)
     with left:
-        st.line_chart(downsample_for_chart(window[["PV_total_w"]]))
+        st.line_chart(view["pv_chart"])
     with right:
-        volt_df = window[["Ubat"]].copy()
-        volt_df["disconnect_threshold"] = 47.0
-        st.line_chart(downsample_for_chart(volt_df))
+        st.line_chart(view["volt_chart"])
 
     st.subheader(f"Observed load vs. Qτ counterfactual -- {house_tag}")
-    band = window[
-        [house_col, f"qtau_pred_{house_tag}", f"q10_pred_{house_tag}", f"q90_pred_{house_tag}"]
-    ].copy()
-    band.columns = ["Observed", "Qτ counterfactual", "Q10", "Q90"]
-    st.line_chart(downsample_for_chart(band))
+    st.line_chart(view["band_chart"])
 
     st.subheader("Rolling suppression (24h) and alert timeline")
-    alert_df = pd.DataFrame(
-        {
-            "rolling_suppression_w": rolling_supp,
-            "alert_fired": ((rolling_supp > 100.0) & (rolling_volt > 47.0)).astype(int)
-            * rolling_supp.max()
-            if rolling_supp.notna().any()
-            else 0,
-        }
-    )
-    st.line_chart(downsample_for_chart(alert_df))
+    st.line_chart(view["alert_chart"])
 
     render_binding_table("Mafate")
 
@@ -464,5 +491,5 @@ else:
         daily = pd.DataFrame.from_dict(daily_records, orient="index")
         st.dataframe(
             daily[["alert_tier", "advisory_run_days", "critical_run_days", "vacant"]].tail(30),
-            use_container_width=True,
+            width="stretch",
         )

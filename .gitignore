@@ -3,3 +3,14 @@ nibm-thesis-latex.zip
 
 # Claude Code local settings and hooks (kept out of the repository)
 .claude/
+
+# Python cache files (regenerated on every run)
+__pycache__/
+*.pyc
+
+# Dissertation, submission, viva and planning material: kept on this computer only,
+# so the public repository holds the system code alone
+nibm-thesis-latex/
+FINAL-SUBMISSION/
+viva/
+0[0-9]-*.md
