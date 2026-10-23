@@ -235,7 +235,6 @@ st.caption(
 if site == "Mafate" and not is_onboarded:
     df = load_mafate()
     house_tag = unit_label
-    house_col = {"h1": "Load_h1", "h2": "Load_h2", "h3": "Load_h3"}[house_tag]
 
     with st.sidebar:
         date_min, date_max = df.index.min().date(), df.index.max().date()
