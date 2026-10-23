@@ -5,3 +5,9 @@ scikit-learn==1.7.1
 scipy==1.16.1
 pyarrow==24.0.0
 matplotlib==3.10.5
+# web server stack pinned to the versions the dashboard was tested with locally; newer
+# starlette/uvicorn raised "Expected ASGI message 'http.response.start'" on the cloud
+starlette==0.47.2
+uvicorn==0.35.0
+anyio==4.6.2.post1
+httptools==0.6.4
