@@ -124,6 +124,56 @@ def downsample_for_chart(frame: pd.DataFrame, max_points: int = 2000) -> pd.Data
     return frame.resample(f"{target_freq_min}min").mean()
 
 
+@st.cache_data(show_spinner="Computing the Mafate view ...")
+def mafate_view(house_tag: str, start: str, end: str, injection_level: int) -> dict:
+    """Metrics and chart frames for one Mafate house, date range and fade level.
+
+    Cached per setting, so moving a slider back to a position already seen is instant
+    and only small, downsampled frames are kept -- not the full-resolution window."""
+    df = load_mafate()
+    house_col = {"h1": "Load_h1", "h2": "Load_h2", "h3": "Load_h3"}[house_tag]
+    supp_col = f"suppression_w_{house_tag}"
+    window = df.loc[start:end].copy()
+
+    if injection_level > 0:
+        from injection import inject_degradation  # imported on first use: it pulls in matplotlib (~1 s)
+
+        # The fade only needs the load column, so copy that rather than the whole frame.
+        injected = inject_degradation(df[[house_col]], injection_level / 100.0, start, house_col)
+        window[house_col] = injected.loc[window.index, house_col]
+        # Suppression must be recomputed against the injected load -- the saved
+        # suppression column reflects the real (uninjected) trace.
+        window[supp_col] = (window[f"qtau_pred_{house_tag}"] - window[house_col]).clip(lower=0.0)
+
+    # min_periods = 80% of the window, the same as monitor.check_alert: Mafate's 1-minute
+    # record has gaps, and a strict full-window requirement leaves the signal blank
+    # everywhere (verified: 100% NaN), so the alert light could never turn on.
+    min_p = int(24 * 60 * 0.8)
+    rolling_supp = window[supp_col].rolling(24 * 60, min_periods=min_p).mean()
+    rolling_volt = window["Ubat"].rolling(24 * 60, min_periods=min_p).mean()
+    fired = (rolling_supp > 100.0) & (rolling_volt > 47.0)
+
+    volt_df = window[["Ubat"]].copy()
+    volt_df["disconnect_threshold"] = 47.0
+    band = window[[house_col, f"qtau_pred_{house_tag}", f"q10_pred_{house_tag}", f"q90_pred_{house_tag}"]].copy()
+    band.columns = ["Observed", "Qτ counterfactual", "Q10", "Q90"]
+    alert_df = pd.DataFrame(
+        {
+            "rolling_suppression_w": rolling_supp,
+            "alert_fired": fired.astype(int) * rolling_supp.max() if rolling_supp.notna().any() else 0,
+        }
+    )
+    return {
+        "mean_suppression": float(window[supp_col].mean()),
+        "binding_rate": 100.0 * float((window["Ubat"] <= 47.0).mean()),
+        "alert_active": bool(fired.fillna(False).iloc[-1]) if len(window) else False,
+        "pv_chart": downsample_for_chart(window[["PV_total_w"]]),
+        "volt_chart": downsample_for_chart(volt_df),
+        "band_chart": downsample_for_chart(band),
+        "alert_chart": downsample_for_chart(alert_df),
+    }
+
+
 def render_binding_table(site: str) -> None:
     name = BINDING_TABLES.get(site)
     if not name:
