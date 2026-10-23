@@ -512,6 +512,47 @@
         "test_MAE_W_qtau": 37.24,
         "q10_q90_coverage_pct": 72.51
       }
+    },
+    "DEMO_House_Rationing": {
+      "household_id": "DEMO_House_Rationing",
+      "site": "Demo (synthetic)",
+      "unit": "DEMO_House_Rationing",
+      "origin": "onboarded",
+      "status": "active",
+      "feature_tier": "telemetry_only",
+      "feature_cols": [
+        "Hour",
+        "DayOfWeek",
+        "Month_sin",
+        "Month_cos",
+        "Trend_days"
+      ],
+      "model_paths": {
+        "q10": "models/DEMO_House_Rationing_q10.pkl",
+        "q50": "models/DEMO_House_Rationing_q50.pkl",
+        "q90": "models/DEMO_House_Rationing_q90.pkl",
+        "qtau": "models/DEMO_House_Rationing_qtau.pkl"
+      },
+      "tau": 0.5,
+      "trend_origin": "2026-11-01T00:00:00",
+      "battery_metric": "voltage_v",
+      "battery_ok_threshold": 47.0,
+      "battery_cutoff_threshold": 46.0,
+      "nominal_system_voltage_v": 48.0,
+      "vacancy_float_threshold": 50.81,
+      "vacancy_load_w": 5.0,
+      "advisory_suppression_w": 50.0,
+      "critical_suppression_w": 100.0,
+      "onboarded_at": "2026-10-23T04:59:58+00:00",
+      "baseline_days": 35,
+      "training_summary": {
+        "tau": 0.5,
+        "tau_tolerance_w": 29.92,
+        "n_train_rows": 839,
+        "n_test_rows": 211,
+        "test_MAE_W_qtau": 37.24,
+        "q10_q90_coverage_pct": 72.51
+      }
     }
   }
 }
