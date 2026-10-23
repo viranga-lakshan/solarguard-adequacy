@@ -23,7 +23,6 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from injection import inject_degradation
 from monitor import monitor_household
 from onboarding import REGISTRY_PATH, load_registry
 from paths import DATA_DIR
@@ -124,7 +123,7 @@ def render_binding_table(site: str) -> None:
     table = load_table(name)
     if table is not None:
         st.subheader(f"Measured binding rate -- {site}")
-        st.dataframe(table, use_container_width=True)
+        st.dataframe(table, width="stretch")
 
 
 def build_unit_map() -> tuple[dict[str, dict[str, str]], set[str]]:
@@ -473,5 +472,5 @@ else:
         daily = pd.DataFrame.from_dict(daily_records, orient="index")
         st.dataframe(
             daily[["alert_tier", "advisory_run_days", "critical_run_days", "vacant"]].tail(30),
-            use_container_width=True,
+            width="stretch",
         )
