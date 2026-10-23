@@ -182,8 +182,14 @@ if site == "Mafate" and not is_onboarded:
 
     with st.sidebar:
         date_min, date_max = df.index.min().date(), df.index.max().date()
+        # Open on 45 days from 1 Nov 2020 -- day 184, the start date of the E1 fade test --
+        # rather than the whole year: 474k one-minute rows made every rerun slow, and this
+        # window lines the fade demonstration up with Section 5.4.5. The full year is
+        # still one slider drag away.
+        default_start = min(max(pd.Timestamp("2020-11-01").date(), date_min), date_max)
+        default_end = min(date_max, default_start + pd.Timedelta(days=44).to_pytimedelta())
         date_range = st.slider(
-            "Date range", min_value=date_min, max_value=date_max, value=(date_min, date_max)
+            "Date range", min_value=date_min, max_value=date_max, value=(default_start, default_end)
         )
         injection_level = st.slider("Injection level (capacity fade, %)", 0, 80, 0, step=10)
 
