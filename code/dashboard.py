@@ -83,9 +83,17 @@ SITE_NOTES = {
 # cache_resource keeps ONE shared copy in memory. cache_data would pickle and copy the
 # 159 MB Mafate frame on every rerun (every slider move); these frames are only ever
 # read here -- each view slices and .copy()s its own window before changing anything.
+MAFATE_COLUMNS = ["PV_total_w", "Ubat"] + [
+    f"{col}_{h}" for h in ("h1", "h2", "h3")
+    for col in ("q10_pred", "q90_pred", "qtau_pred", "suppression_w")
+] + ["Load_h1", "Load_h2", "Load_h3"]
+
+
 @st.cache_resource
 def load_mafate() -> pd.DataFrame:
-    return pd.read_parquet(DATA_DIR / "mafate_with_suppression.parquet")
+    # Only the 17 of 46 columns this view draws: about a third of the memory and read time,
+    # which matters on the small Streamlit Cloud machine.
+    return pd.read_parquet(DATA_DIR / "mafate_with_suppression.parquet", columns=MAFATE_COLUMNS)
 
 
 @st.cache_resource
