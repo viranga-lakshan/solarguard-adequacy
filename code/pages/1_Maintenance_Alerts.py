@@ -114,6 +114,8 @@ for r in open_alerts:
         f"**Action:** send a technician to check the battery's usable capacity and the household's "
         f"connection. Check payment status first; do not pass this alert to billing."
     )
+    st.page_link("dashboard.py", label=f"Open {r['household_id']} in the dashboard", icon="\U0001F4C8",
+                 query_params={"household": r["household_id"]})
     scored = frames[r["household_id"]]
     recent = scored.loc[scored.index >= scored.index.max() - pd.Timedelta(days=14)]
     st.line_chart(
@@ -126,7 +128,8 @@ for r in open_alerts:
     )
 
 st.subheader("All monitored households")
-st.dataframe(
+st.caption("Select a row to open that household's graphs in the dashboard.")
+picked = st.dataframe(
     pd.DataFrame(
         {
             "Household": [r["household_id"] for r in rows],
@@ -139,6 +142,11 @@ st.dataframe(
     ),
     hide_index=True,
     width="stretch",
+    key="monitored_households",
+    on_select="rerun",
+    selection_mode="single-row",
 )
+if picked.selection.rows:
+    st.switch_page("dashboard.py", query_params={"household": rows[picked.selection.rows[0]]["household_id"]})
 st.caption("Households marked 'Demo (synthetic)' use made-up data to demonstrate the workflow; "
            "all results in the dissertation come from the fifteen real households.")

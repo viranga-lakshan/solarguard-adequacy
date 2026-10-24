@@ -210,14 +210,22 @@ UNIT_MAP, ONBOARDED_IDS = build_unit_map()
 # --------------------------------------------------------------------------
 # Sidebar
 # --------------------------------------------------------------------------
+# A household can be opened directly by link, e.g. from the Maintenance Alerts page (?household=<id>).
+requested_id = st.query_params.get("household")
+requested_site = next((s for s, unit_map in UNIT_MAP.items() if requested_id in unit_map.values()), None)
+
 with st.sidebar:
     st.header("Controls")
-    site = st.selectbox("Site", list(UNIT_MAP))
+    site_names = list(UNIT_MAP)
+    site = st.selectbox("Site", site_names, index=site_names.index(requested_site) if requested_site else 0)
 
+    unit_names = list(UNIT_MAP[site])
+    requested_unit = next((u for u, hid in UNIT_MAP[site].items() if hid == requested_id), None)
+    unit_index = unit_names.index(requested_unit) if requested_unit else 0
     if site == "Mafate":
-        unit_label = st.selectbox("House", list(UNIT_MAP[site]))
+        unit_label = st.selectbox("House", unit_names, index=unit_index)
     else:
-        unit_label = st.selectbox("Unit", list(UNIT_MAP[site]))
+        unit_label = st.selectbox("Unit", unit_names, index=unit_index)
 
 selected_id = UNIT_MAP[site][unit_label]
 is_onboarded = selected_id in ONBOARDED_IDS
